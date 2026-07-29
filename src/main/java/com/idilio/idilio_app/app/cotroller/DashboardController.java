@@ -6,7 +6,6 @@ import com.idilio.idilio_app.app.model.Venta;
 import com.idilio.idilio_app.app.service.IngredienteService;
 import com.idilio.idilio_app.app.service.ProductoService;
 import com.idilio.idilio_app.app.service.VentaService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,14 +17,17 @@ import java.util.List;
 @Controller
 public class DashboardController {
 
-    @Autowired
-    private VentaService ventaService;
+    private final VentaService ventaService;
 
-    @Autowired
-    private ProductoService productoService;
+    private final ProductoService productoService;
 
-    @Autowired
-    private IngredienteService ingredienteService;
+    private final IngredienteService ingredienteService;
+
+    public DashboardController(VentaService ventaService, ProductoService productoService, IngredienteService ingredienteService) {
+        this.ventaService = ventaService;
+        this.productoService = productoService;
+        this.ingredienteService = ingredienteService;
+    }
 
     @GetMapping("/")
     public String dashboard(Model model) {

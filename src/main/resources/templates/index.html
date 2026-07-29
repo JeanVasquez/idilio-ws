@@ -4,7 +4,7 @@
     <title>Dashboard - Idilio</title>
 </head>
 <body>
-    <div th:fragment="content">
+<div th:fragment="content">
     <div class="container-fluid px-4 py-4">
 
         <!-- ========== ENCABEZADO ========== -->
@@ -15,7 +15,8 @@
             </div>
             <div>
                 <span class="badge bg-light text-dark p-2 px-3 rounded-pill shadow-sm">
-                    <i class="bi bi-calendar3 me-1"></i> <span th:text="${#dates.format(#dates.createNow(), 'dd/MM/yyyy')}"></span>
+                    <i class="bi bi-calendar3 me-1"></i> <span
+                        th:text="${#dates.format(#dates.createNow(), 'dd/MM/yyyy')}"></span>
                 </span>
             </div>
         </div>
@@ -28,7 +29,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="card-label">Ventas Hoy</div>
-                            <div class="card-number" th:text="${ventasHoy}">0</div>
+                            <div class="card-number" data-type="number" th:text="${ventasHoy}">0</div>
                         </div>
                         <div class="card-icon"><i class="bi bi-cart-check"></i></div>
                     </div>
@@ -41,7 +42,9 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="card-label">Ingresos Hoy</div>
-                            <div class="card-number" th:text="${#numbers.formatCurrency(ingresosHoy)}">$0</div>
+                            <div class="card-number" data-type="currency"
+                                 th:text="${#numbers.formatCurrency(ingresosHoy)}">$0
+                            </div>
                         </div>
                         <div class="card-icon"><i class="bi bi-coin"></i></div>
                     </div>
@@ -54,7 +57,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="card-label">Productos Activos</div>
-                            <div class="card-number" th:text="${productosActivos}">0</div>
+                            <div class="card-number" data-type="number" th:text="${productosActivos}">0</div>
                         </div>
                         <div class="card-icon"><i class="bi bi-box-seam"></i></div>
                     </div>
@@ -67,9 +70,10 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="card-label">Stock Bajo</div>
-                            <div class="card-number" th:text="${stockBajo}">0</div>
+                            <div class="card-number" data-type="number" th:text="${stockBajo}">0</div>
                         </div>
-                        <div class="card-icon" style="color: #ff9500;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                        <div class="card-icon" style="color: #ff9500;"><i class="bi bi-exclamation-triangle-fill"></i>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -88,31 +92,35 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="fw-bold mb-0">Últimas Ventas</h5>
-                    <a href="/ventas" class="text-decoration-none small">Ver todas <i class="bi bi-chevron-right"></i></a>
+                    <a href="/ventas" class="text-decoration-none small">Ver todas <i
+                            class="bi bi-chevron-right"></i></a>
                 </div>
 
                 <div class="table-responsive">
                     <table class="table table-modern">
                         <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Cliente</th>
-                                <th>Método</th>
-                                <th>Total</th>
-                                <th>Estado</th>
-                            </tr>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Método</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="venta : ${ultimasVentas}">
-                                <td><span th:text="${#temporals.format(venta.fecha, 'dd/MM/yyyy HH:mm')}"></span></td>
-                                <td th:text="${venta.cliente != null ? venta.cliente : 'Anónimo'}"></td>
-                                <td><span class="badge bg-light text-dark px-3 py-1 rounded-pill" th:text="${venta.metodoPago}"></span></td>
-                                <td class="fw-semibold" th:text="${#numbers.formatCurrency(venta.total)}"></td>
-                                <td><span class="badge-pago" th:text="${venta.estado}"></span></td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(ultimasVentas)}">
-                                <td colspan="5" class="text-center text-muted py-4">No hay ventas registradas aún.</td>
-                            </tr>
+                        <tr th:each="venta : ${ultimasVentas}">
+                            <td><span th:text="${#temporals.format(venta.fecha, 'dd/MM/yyyy HH:mm')}"></span></td>
+                            <td th:text="${venta.cliente != null ? venta.cliente : 'Anónimo'}"></td>
+                            <td><span class="badge bg-light text-dark px-3 py-1 rounded-pill"
+                                      th:text="${venta.metodoPago}"></span></td>
+                            <td class="fw-semibold"
+                                th:text="'$' + ${#numbers.formatDecimal(venta.total, 0, 'POINT', 0, 'COMMA')}">
+                            </td>
+                            <td><span class="badge-pago" th:text="${venta.estado}"></span></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(ultimasVentas)}">
+                            <td colspan="5" class="text-center text-muted py-4">No hay ventas registradas aún.</td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -122,38 +130,57 @@
 
     <!-- ========== SCRIPT PARA ANIMAR NÚMEROS (Opcional) ========== -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Animar los números de las tarjetas (contador ascendente)
-            const numbers = document.querySelectorAll('.card-number');
-            numbers.forEach(element => {
-                const target = parseFloat(element.textContent.replace(/[^0-9.-]/g, ''));
-                if (isNaN(target) || target === 0) return;
+        document.addEventListener('DOMContentLoaded', function () {
+    const numbers = document.querySelectorAll('.card-number');
 
-                let current = 0;
-                const duration = 1000; // 1 segundo
-                const steps = 40;
-                const increment = target / steps;
-                let step = 0;
+    numbers.forEach(element => {
+        const target = parseFloat(
+            element.textContent.replace(/[^0-9.-]/g, '')
+        );
 
-                const timer = setInterval(() => {
-                    step++;
-                    if (step >= steps) {
-                        element.textContent = target.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-                        clearInterval(timer);
-                    } else {
-                        current += increment;
-                        // Para números no monetarios (como conteo de ventas), mostramos sin formato de moneda
-                        if (element.textContent.includes('$')) {
-                            element.textContent = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(Math.round(current));
-                        } else {
-                            element.textContent = Math.round(current).toString();
-                        }
-                    }
-                }, duration / steps);
-            });
-        });
+        if (isNaN(target) || target === 0) return;
+
+        const isCurrency = element.dataset.type === 'currency';
+
+        let current = 0;
+        const duration = 1000;
+        const steps = 40;
+        const increment = target / steps;
+        let step = 0;
+
+        const timer = setInterval(() => {
+            step++;
+
+            if (step >= steps) {
+                if (isCurrency) {
+                    element.textContent = new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0
+                    }).format(target);
+                } else {
+                    element.textContent = target.toLocaleString('es-CO');
+                }
+
+                clearInterval(timer);
+            } else {
+                current += increment;
+
+                if (isCurrency) {
+                    element.textContent = new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0
+                    }).format(Math.round(current));
+                } else {
+                    element.textContent = Math.round(current).toLocaleString('es-CO');
+                }
+            }
+        }, duration / steps);
+    });
+});
     </script>
-    </div>
-    </div>
+</div>
+</div>
 </body>
 </html>
