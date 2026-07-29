@@ -116,7 +116,13 @@
                             <td class="fw-semibold"
                                 th:text="'$' + ${#numbers.formatDecimal(venta.total, 0, 'POINT', 0, 'COMMA')}">
                             </td>
-                            <td><span class="badge-pago" th:text="${venta.estado}"></span></td>
+                            <td>
+                                <span class="badge-pago"
+                                      th:classappend="
+                                  ${venta.estado == 'PAGADO' ? ' badge-success' : venta.estado == 'PENDIENTE' ? ' badge-warning' : 'badge-danger'}"
+                                      th:text="${venta.estado}">
+                                </span>
+                            </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(ultimasVentas)}">
                             <td colspan="5" class="text-center text-muted py-4">No hay ventas registradas aún.</td>
