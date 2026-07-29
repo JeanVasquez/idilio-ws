@@ -10,4 +10,6 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
     List<Venta> findAllByOrderByFechaDesc();
 
     List<Venta> findByFechaBetween(LocalDateTime inicio, LocalDateTime fin);
+
+    List<Venta> findTop10ByOrderByFechaDesc();
 }

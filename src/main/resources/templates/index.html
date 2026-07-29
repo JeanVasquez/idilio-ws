@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<head>
+    <title>Dashboard - Idilio</title>
+</head>
+<body>
+    <div th:fragment="content">
+    <div class="container-fluid px-4 py-4">
+
+        <!-- ========== ENCABEZADO ========== -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 fw-bold mb-1" style="color: #1d1d1f;">Dashboard</h1>
+                <p class="text-muted small">Bienvenido de vuelta. Aquí tienes el resumen de hoy.</p>
+            </div>
+            <div>
+                <span class="badge bg-light text-dark p-2 px-3 rounded-pill shadow-sm">
+                    <i class="bi bi-calendar3 me-1"></i> <span th:text="${#dates.format(#dates.createNow(), 'dd/MM/yyyy')}"></span>
+                </span>
+            </div>
+        </div>
+
+        <!-- ========== TARJETAS DE RESUMEN ========== -->
+        <div class="row g-4 mb-4">
+            <!-- Ventas Hoy -->
+            <div class="col-xl-3 col-md-6">
+                <div class="card-dashboard fade-in" style="animation-delay: 0.1s;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="card-label">Ventas Hoy</div>
+                            <div class="card-number" th:text="${ventasHoy}">0</div>
+                        </div>
+                        <div class="card-icon"><i class="bi bi-cart-check"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingresos Hoy -->
+            <div class="col-xl-3 col-md-6">
+                <div class="card-dashboard fade-in" style="animation-delay: 0.2s;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="card-label">Ingresos Hoy</div>
+                            <div class="card-number" th:text="${#numbers.formatCurrency(ingresosHoy)}">$0</div>
+                        </div>
+                        <div class="card-icon"><i class="bi bi-coin"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos Activos -->
+            <div class="col-xl-3 col-md-6">
+                <div class="card-dashboard fade-in" style="animation-delay: 0.3s;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="card-label">Productos Activos</div>
+                            <div class="card-number" th:text="${productosActivos}">0</div>
+                        </div>
+                        <div class="card-icon"><i class="bi bi-box-seam"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alertas Stock Bajo -->
+            <div class="col-xl-3 col-md-6">
+                <div class="card-dashboard fade-in" style="animation-delay: 0.4s; border-left: 4px solid #ff9500;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="card-label">Stock Bajo</div>
+                            <div class="card-number" th:text="${stockBajo}">0</div>
+                        </div>
+                        <div class="card-icon" style="color: #ff9500;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== ALERTAS DE STOCK (si hay) ========== -->
+        <div th:if="${stockBajo > 0}" class="alert-stock fade-in mb-4" style="animation-delay: 0.5s;">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <span><strong>Atención:</strong> Hay <span th:text="${stockBajo}"></span> ingredientes con stock por debajo del mínimo. Revisa el inventario.</span>
+            </div>
+        </div>
+
+        <!-- ========== TABLA DE ÚLTIMAS VENTAS ========== -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Últimas Ventas</h5>
+                    <a href="/ventas" class="text-decoration-none small">Ver todas <i class="bi bi-chevron-right"></i></a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-modern">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Método</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="venta : ${ultimasVentas}">
+                                <td><span th:text="${#temporals.format(venta.fecha, 'dd/MM/yyyy HH:mm')}"></span></td>
+                                <td th:text="${venta.cliente != null ? venta.cliente : 'Anónimo'}"></td>
+                                <td><span class="badge bg-light text-dark px-3 py-1 rounded-pill" th:text="${venta.metodoPago}"></span></td>
+                                <td class="fw-semibold" th:text="${#numbers.formatCurrency(venta.total)}"></td>
+                                <td><span class="badge-pago" th:text="${venta.estado}"></span></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(ultimasVentas)}">
+                                <td colspan="5" class="text-center text-muted py-4">No hay ventas registradas aún.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SCRIPT PARA ANIMAR NÚMEROS (Opcional) ========== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animar los números de las tarjetas (contador ascendente)
+            const numbers = document.querySelectorAll('.card-number');
+            numbers.forEach(element => {
+                const target = parseFloat(element.textContent.replace(/[^0-9.-]/g, ''));
+                if (isNaN(target) || target === 0) return;
+
+                let current = 0;
+                const duration = 1000; // 1 segundo
+                const steps = 40;
+                const increment = target / steps;
+                let step = 0;
+
+                const timer = setInterval(() => {
+                    step++;
+                    if (step >= steps) {
+                        element.textContent = target.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+                        clearInterval(timer);
+                    } else {
+                        current += increment;
+                        // Para números no monetarios (como conteo de ventas), mostramos sin formato de moneda
+                        if (element.textContent.includes('$')) {
+                            element.textContent = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(Math.round(current));
+                        } else {
+                            element.textContent = Math.round(current).toString();
+                        }
+                    }
+                }, duration / steps);
+            });
+        });
+    </script>
+    </div>
+    </div>
+</body>
+</html>

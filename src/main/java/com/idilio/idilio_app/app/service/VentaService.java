@@ -183,6 +183,14 @@ public class VentaService {
         return convertirAResponse(venta);
     }
 
+    public List<Venta> listarUltimas(int limite) {
+        return ventaRepo.findTop10ByOrderByFechaDesc(); // o con PageRequest
+    }
+
+    public List<Venta> obtenerVentasPorFecha(LocalDateTime inicio, LocalDateTime fin) {
+        return ventaRepo.findByFechaBetween(inicio, fin);
+    }
+
     // Méthod auxiliar para convertir Venta a VentaResponseDTO
     private VentaResponseDTO convertirAResponse(Venta venta) {
         VentaResponseDTO response = new VentaResponseDTO();
