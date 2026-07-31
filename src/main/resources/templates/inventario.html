@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::content})}">
+<head>
+    <title>Inventario - Idilio</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="container-fluid px-4 py-4">
+
+        <!-- ========== ENCABEZADO ========== -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 fw-bold mb-1" style="color: #1d1d1f;">Inventario</h1>
+                <p class="text-muted small">Gestiona tus ingredientes y niveles de stock.</p>
+            </div>
+            <button class="btn btn-dark rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalIngrediente"
+                    onclick="abrirModalNuevo()">
+                <i class="bi bi-plus-lg me-1"></i> Nuevo Ingrediente
+            </button>
+        </div>
+
+        <!-- ========== TABLA ========== -->
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Stock</th>
+                    <th>Unidad</th>
+                    <th>Stock Mínimo</th>
+                    <th>Precio Unitario</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="tablaIngredientes">
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">Cargando ingredientes...</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ========== MODAL CREAR / EDITAR ========== -->
+    <div class="modal fade" id="modalIngrediente" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 18px;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitulo">Nuevo Ingrediente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formIngrediente">
+                        <input type="hidden" id="ingredienteId">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Stock actual</label>
+                                <input type="number" step="0.01" class="form-control" id="stock" required>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Unidad</label>
+                                <select class="form-select w-100" id="unidad" required>
+                                    <option value="" disabled selected>Selecciona...</option>
+                                    <option value="gr">Gramos (gr)</option>
+                                    <option value="kg">Kilogramos (kg)</option>
+                                    <option value="ml">Mililitros (ml)</option>
+                                    <option value="l">Litros (l)</option>
+                                    <option value="unidad">Unidad</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Stock mínimo</label>
+                                <input type="number" step="0.01" class="form-control" id="stockMinimo" required>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Precio unitario</label>
+                                <input type="number" step="0.01" class="form-control" id="precioCompra" required>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-dark" onclick="guardarIngrediente()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODAL AJUSTE RÁPIDO DE STOCK ========== -->
+    <div class="modal fade" id="modalStock" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content" style="border-radius: 18px;">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajustar Stock</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="stockIngredienteId">
+                    <label class="form-label">Nuevo stock</label>
+                    <input type="number" step="0.01" class="form-control" id="nuevoStock" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-dark" onclick="confirmarAjusteStock()">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/ingredientes';
+
+        document.addEventListener('DOMContentLoaded', cargarIngredientes);
+
+        function cargarIngredientes() {
+            fetch(API_URL)
+                .then(res => res.json())
+                .then(data => renderTabla(data))
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('tablaIngredientes').innerHTML =
+                        '<tr><td colspan="6" class="text-center text-danger py-4">Error al cargar el inventario.</td></tr>';
+                });
+        }
+
+        function renderTabla(ingredientes) {
+            const tbody = document.getElementById('tablaIngredientes');
+
+            if (!ingredientes || ingredientes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No hay ingredientes registrados.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = ingredientes.map(ing => {
+                const bajoStock = ing.stock <= ing.stockMinimo;
+                return `
+                    <tr>
+                        <td class="fw-semibold">${ing.nombre}</td>
+                        <td>
+                            ${ing.stock}
+                            ${bajoStock ? '<span class="badge-pago badge-warning ms-2"><i class="bi bi-exclamation-triangle-fill"></i> Bajo</span>' : ''}
+                        </td>
+                        <td>${ing.unidad}</td>
+                        <td>${ing.stockMinimo}</td>
+                        <td>$${Number(ing.precioCompra).toLocaleString('es-CO')}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-light rounded-pill" onclick="abrirModalStock(${ing.id}, ${ing.stock})" title="Ajustar stock">
+                                <i class="bi bi-sliders"></i>
+                            </button>
+                            <button class="btn btn-sm btn-light rounded-pill" onclick="abrirModalEditar(${ing.id})" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-light rounded-pill text-danger" onclick="eliminarIngrediente(${ing.id})" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function abrirModalNuevo() {
+            document.getElementById('formIngrediente').reset();
+            document.getElementById('ingredienteId').value = '';
+            document.getElementById('modalTitulo').textContent = 'Nuevo Ingrediente';
+        }
+
+        function abrirModalEditar(id) {
+            fetch(`${API_URL}/${id}`)
+                .then(res => res.json())
+                .then(ing => {
+                    document.getElementById('ingredienteId').value = ing.id;
+                    document.getElementById('nombre').value = ing.nombre;
+                    document.getElementById('stock').value = ing.stock;
+                    document.getElementById('unidad').value = ing.unidad;
+                    document.getElementById('stockMinimo').value = ing.stockMinimo;
+                    document.getElementById('precioCompra').value = ing.precioCompra;
+                    document.getElementById('modalTitulo').textContent = 'Editar Ingrediente';
+                    new bootstrap.Modal(document.getElementById('modalIngrediente')).show();
+                })
+                .catch(err => console.error(err));
+        }
+
+        function guardarIngrediente() {
+            const id = document.getElementById('ingredienteId').value;
+            const payload = {
+                nombre: document.getElementById('nombre').value,
+                stock: parseFloat(document.getElementById('stock').value),
+                unidad: document.getElementById('unidad').value,
+                stockMinimo: parseFloat(document.getElementById('stockMinimo').value),
+                precioCompra: parseFloat(document.getElementById('precioCompra').value)
+            };
+
+            const url = id ? `${API_URL}/${id}` : API_URL;
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error('Error al guardar');
+                    return res.json();
+                })
+                .then(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('modalIngrediente')).hide();
+                    cargarIngredientes();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('No se pudo guardar el ingrediente.');
+                });
+        }
+
+        function abrirModalStock(id, stockActual) {
+            document.getElementById('stockIngredienteId').value = id;
+            document.getElementById('nuevoStock').value = stockActual;
+            new bootstrap.Modal(document.getElementById('modalStock')).show();
+        }
+
+        function confirmarAjusteStock() {
+            const id = document.getElementById('stockIngredienteId').value;
+            const nuevoStock = parseFloat(document.getElementById('nuevoStock').value);
+
+            fetch(`${API_URL}/${id}/stock`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({stock: nuevoStock})
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error('Error al ajustar stock');
+                    return res.json();
+                })
+                .then(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('modalStock')).hide();
+                    cargarIngredientes();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('No se pudo ajustar el stock.');
+                });
+        }
+
+        function eliminarIngrediente(id) {
+            if (!confirm('¿Eliminar este ingrediente? Esta acción no se puede deshacer.')) return;
+
+            fetch(`${API_URL}/${id}`, {method: 'DELETE'})
+                .then(res => {
+                    if (!res.ok) throw new Error('Error al eliminar');
+                    cargarIngredientes();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('No se pudo eliminar el ingrediente.');
+                });
+        }
+    </script>
+</div>
+</body>
+</html>

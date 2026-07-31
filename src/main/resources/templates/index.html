@@ -43,7 +43,7 @@
                         <div>
                             <div class="card-label">Ingresos Hoy</div>
                             <div class="card-number" data-type="currency"
-                                 th:text="${#numbers.formatCurrency(ingresosHoy)}">$0
+                                 th:text="${ingresosHoy}">$0
                             </div>
                         </div>
                         <div class="card-icon"><i class="bi bi-coin"></i></div>
@@ -137,54 +137,91 @@
     <!-- ========== SCRIPT PARA ANIMAR NÚMEROS (Opcional) ========== -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-    const numbers = document.querySelectorAll('.card-number');
+            const numbers = document.querySelectorAll('.card-number');
 
-    numbers.forEach(element => {
-        const target = parseFloat(
-            element.textContent.replace(/[^0-9.-]/g, '')
-        );
+            // Ajusta el tamaño de fuente según la cantidad de dígitos visibles
+            function adjustFontSize(el) {
+                // Contar solo dígitos para decidir el tamaño
+                const digits = (el.textContent.replace(/\D/g, '') || '').length;
 
-        if (isNaN(target) || target === 0) return;
+                // Fórmula simple: tamaño base en rem, reducir por dígito adicional, con un mínimo
+                const base = 2.0; // rem
+                const reductionPerDigit = 0.06; // rem por dígito por encima del umbral
+                const threshold = 3; // dígitos antes de empezar a reducir
+                const minSize = 0.9; // rem
 
-        const isCurrency = element.dataset.type === 'currency';
+                let size = base - Math.max(0, digits - threshold) * reductionPerDigit;
+                if (size < minSize) size = minSize;
 
-        let current = 0;
-        const duration = 1000;
-        const steps = 40;
-        const increment = target / steps;
-        let step = 0;
-
-        const timer = setInterval(() => {
-            step++;
-
-            if (step >= steps) {
-                if (isCurrency) {
-                    element.textContent = new Intl.NumberFormat('es-CO', {
-                        style: 'currency',
-                        currency: 'COP',
-                        minimumFractionDigits: 0
-                    }).format(target);
-                } else {
-                    element.textContent = target.toLocaleString('es-CO');
-                }
-
-                clearInterval(timer);
-            } else {
-                current += increment;
-
-                if (isCurrency) {
-                    element.textContent = new Intl.NumberFormat('es-CO', {
-                        style: 'currency',
-                        currency: 'COP',
-                        minimumFractionDigits: 0
-                    }).format(Math.round(current));
-                } else {
-                    element.textContent = Math.round(current).toLocaleString('es-CO');
-                }
+                el.style.fontSize = size + 'rem';
             }
-        }, duration / steps);
-    });
-});
+
+            numbers.forEach(element => {
+                const raw = element.textContent.trim();
+                const numericStr = raw.replace(/[^0-9.-]/g, '');
+                const target = parseFloat(numericStr);
+
+                const isCurrency = element.dataset.type === 'currency';
+
+                // Si no es número, sólo ajustamos el tamaño y saltamos animación
+                if (isNaN(target)) {
+                    adjustFontSize(element);
+                    return;
+                }
+
+                // Si es cero, mostramos el formato adecuado y ajustamos tamaño
+                if (target === 0) {
+                    if (isCurrency) {
+                        element.textContent = new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                            minimumFractionDigits: 0
+                        }).format(0);
+                    } else {
+                        element.textContent = '0';
+                    }
+                    adjustFontSize(element);
+                    return;
+                }
+
+                // Animación de conteo (manteniendo ajuste de tamaño en cada paso)
+                let current = 0;
+                const duration = 1000;
+                const steps = 40;
+                const increment = target / steps;
+                let step = 0;
+
+                const timer = setInterval(() => {
+                    step++;
+
+                    if (step >= steps) {
+                        if (isCurrency) {
+                            element.textContent = new Intl.NumberFormat('es-CO', {
+                                style: 'currency',
+                                currency: 'COP',
+                                minimumFractionDigits: 0
+                            }).format(Math.round(target));
+                        } else {
+                            element.textContent = Math.round(target).toLocaleString('es-CO');
+                        }
+                        adjustFontSize(element);
+                        clearInterval(timer);
+                    } else {
+                        current += increment;
+                        if (isCurrency) {
+                            element.textContent = new Intl.NumberFormat('es-CO', {
+                                style: 'currency',
+                                currency: 'COP',
+                                minimumFractionDigits: 0
+                            }).format(Math.round(current));
+                        } else {
+                            element.textContent = Math.round(current).toLocaleString('es-CO');
+                        }
+                        adjustFontSize(element);
+                    }
+                }, duration / steps);
+            });
+        });
     </script>
 </div>
 </div>
